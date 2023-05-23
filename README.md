@@ -80,6 +80,12 @@ disconnect_timeout=60
 ### 命令行启动
 <img width="787" alt="image" src="./images/image-20230521141615884.png">
 
+### 命令行以远端配置文件启动
+```
+npc.exe -rconfig ServerConfig地址
+eg.
+npc.exe -rconfig 127.0.0.1:23123
+```
 
 
 # 项目进度
