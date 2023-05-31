@@ -57,6 +57,14 @@
 （2）把conf和web两个目录和nps目录同级
 （3）修改服务端密码（后期也许会支持md5、或者登陆后修改密码）
 ```
+<img width="713" alt="image" src="https://github.com/Q16G/npsmodify/assets/113832601/63c27034-e456-4ec7-a0f9-b08d0e7c28ca">
+
+<img width="1425" alt="image" src="https://github.com/Q16G/npsmodify/assets/113832601/58a901da-6b92-45e8-8055-2f18e727cae0">
+
+
+<img width="1511" alt="image" src="https://github.com/Q16G/npsmodify/assets/113832601/95d06b90-fd42-4858-9b3b-528e28d3315d">
+
+
 
 <img width="802" alt="image" src="./images/image-20230521141541183.png">
 
