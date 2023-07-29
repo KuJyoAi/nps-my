@@ -1,0 +1,10 @@
+FROM ubuntu:20.04
+
+COPY ./linux_amd64_npc /usr/local/bin/
+RUN sed -i 's/archive.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list \
+  && apt-get update \
+  && apt-get install -y vim net-tools iputils-ping curl wget \
+  && rm -rf /var/lib/apt/lists/* \
+  && chmod +x /usr/local/bin/linux_amd64_npc 
+
+CMD ["linux_amd64_npc","-rconfig=xxxx:22123"]
