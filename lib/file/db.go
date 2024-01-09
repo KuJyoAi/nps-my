@@ -26,6 +26,10 @@ var (
 func GetDb() *DbUtils {
 	once.Do(func() {
 		jsonDb := NewJsonDb(common.GetRunPath())
+		jsonDb.Tasks = new(sync.Map)
+		jsonDb.Hosts = new(sync.Map)
+		jsonDb.HostsTmp = new(sync.Map)
+		jsonDb.Clients = new(sync.Map)
 		jsonDb.LoadClientFromJsonFile()
 		jsonDb.LoadTaskFromJsonFile()
 		jsonDb.LoadHostFromJsonFile()
@@ -34,7 +38,7 @@ func GetDb() *DbUtils {
 	return Db
 }
 
-func GetMapKeys(m sync.Map, isSort bool, sortKey, order string) (keys []int) {
+func GetMapKeys(m *sync.Map, isSort bool, sortKey, order string) (keys []int) {
 	if sortKey != "" && isSort {
 		return sortClientByKey(m, sortKey, order)
 	}

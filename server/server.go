@@ -25,20 +25,20 @@ import (
 
 var (
 	Bridge  *bridge.Bridge
-	RunList sync.Map //map[int]interface{}
+	runList *sync.Map //map[int]interface{}
 )
 
 func init() {
-	RunList = sync.Map{}
+	runList = &sync.Map{}
 }
 
-//init task from db
+// init task from db
 func InitFromCsv() {
 	//Add a public password
 	if vkey := beego.AppConfig.String("public_vkey"); vkey != "" {
 		c := file.NewClient(vkey, true, true)
 		file.GetDb().NewClient(c)
-		RunList.Store(c.Id, nil)
+		runList.Store(c.Id, nil)
 		//RunList[c.Id] = nil
 	}
 	//Initialize services in server-side files
@@ -50,8 +50,8 @@ func InitFromCsv() {
 	})
 }
 
-//get bridge command
-func DealBridgeTask() {
+// dealBridgeTask 处理桥接任务
+func dealBridgeTask() {
 	for {
 		select {
 		case t := <-Bridge.OpenTask:
@@ -84,9 +84,10 @@ func DealBridgeTask() {
 	}
 }
 
-//start a new server
+// StartNewServer start a new server
+// 桥接端口, 配置文件, 桥接类型, 桥接断开时间
 func StartNewServer(bridgePort int, cnf *file.Tunnel, bridgeType string, bridgeDisconnect int) {
-	Bridge = bridge.NewTunnel(bridgePort, bridgeType, common.GetBoolByStr(beego.AppConfig.String("ip_limit")), RunList, bridgeDisconnect)
+	Bridge = bridge.NewTunnel(bridgePort, bridgeType, common.GetBoolByStr(beego.AppConfig.String("ip_limit")), runList, bridgeDisconnect)
 	go func() {
 		if err := Bridge.StartTunnel(); err != nil {
 			logs.Error("start server bridge error", err)
@@ -98,13 +99,13 @@ func StartNewServer(bridgePort int, cnf *file.Tunnel, bridgeType string, bridgeD
 		go proxy.NewP2PServer(p + 1).Start()
 		go proxy.NewP2PServer(p + 2).Start()
 	}
-	go DealBridgeTask()
+	go dealBridgeTask()
 	go dealClientFlow()
 	if svr := NewMode(Bridge, cnf); svr != nil {
 		if err := svr.Start(); err != nil {
 			logs.Error(err)
 		}
-		RunList.Store(cnf.Id, svr)
+		runList.Store(cnf.Id, svr)
 		//RunList[cnf.Id] = svr
 	} else {
 		logs.Error("Incorrect startup mode %s", cnf.Mode)
@@ -122,7 +123,7 @@ func dealClientFlow() {
 	}
 }
 
-//new a server by mode name
+// new a server by mode name
 func NewMode(Bridge *bridge.Bridge, c *file.Tunnel) proxy.Service {
 	var service proxy.Service
 	switch c.Mode {
@@ -156,10 +157,10 @@ func NewMode(Bridge *bridge.Bridge, c *file.Tunnel) proxy.Service {
 	return service
 }
 
-//stop server
+// stop server
 func StopServer(id int) error {
 	//if v, ok := RunList[id]; ok {
-	if v, ok := RunList.Load(id); ok {
+	if v, ok := runList.Load(id); ok {
 		if svr, ok := v.(proxy.Service); ok {
 			if err := svr.Close(); err != nil {
 				return err
@@ -175,18 +176,18 @@ func StopServer(id int) error {
 			file.GetDb().UpdateTask(t)
 		}
 		//delete(RunList, id)
-		RunList.Delete(id)
+		runList.Delete(id)
 		return nil
 	}
 	return errors.New("task is not running")
 }
 
-//add task
+// AddTask 通过Bridge添加一个新的隧道
 func AddTask(t *file.Tunnel) error {
 	if t.Mode == "secret" || t.Mode == "p2p" {
 		logs.Info("secret task %s start ", t.Remark)
 		//RunList[t.Id] = nil
-		RunList.Store(t.Id, nil)
+		runList.Store(t.Id, nil)
 		return nil
 	}
 	if b := tool.TestServerPort(t.Port, t.Mode); !b && t.Mode != "httpHostServer" {
@@ -199,12 +200,12 @@ func AddTask(t *file.Tunnel) error {
 	if svr := NewMode(Bridge, t); svr != nil {
 		logs.Info("tunnel task %s start mode：%s port %d", t.Remark, t.Mode, t.Port)
 		//RunList[t.Id] = svr
-		RunList.Store(t.Id, svr)
+		runList.Store(t.Id, svr)
 		go func() {
 			if err := svr.Start(); err != nil {
 				logs.Error("clientId %d taskId %d start error %s", t.Client.Id, t.Id, err)
 				//delete(RunList, t.Id)
-				RunList.Delete(t.Id)
+				runList.Delete(t.Id)
 				return
 			}
 		}()
@@ -214,7 +215,7 @@ func AddTask(t *file.Tunnel) error {
 	return nil
 }
 
-//start task
+// StartTask start a task
 func StartTask(id int) error {
 	if t, err := file.GetDb().GetTask(id); err != nil {
 		return err
@@ -226,10 +227,10 @@ func StartTask(id int) error {
 	return nil
 }
 
-//delete task
+// DelTask delete a task
 func DelTask(id int) error {
 	//if _, ok := RunList[id]; ok {
-	if _, ok := RunList.Load(id); ok {
+	if _, ok := runList.Load(id); ok {
 		if err := StopServer(id); err != nil {
 			return err
 		}
@@ -237,7 +238,7 @@ func DelTask(id int) error {
 	return file.GetDb().DelTask(id)
 }
 
-//get task list by page num
+// get task list by page num
 func GetTunnel(start, length int, typeVal string, clientId int, search string) ([]*file.Tunnel, int) {
 	list := make([]*file.Tunnel, 0)
 	var cnt int
@@ -260,7 +261,7 @@ func GetTunnel(start, length int, typeVal string, clientId int, search string) (
 			if start--; start < 0 {
 				if length--; length >= 0 {
 					//if _, ok := RunList[v.Id]; ok {
-					if _, ok := RunList.Load(v.Id); ok {
+					if _, ok := runList.Load(v.Id); ok {
 						v.RunStatus = true
 					} else {
 						v.RunStatus = false
@@ -273,7 +274,7 @@ func GetTunnel(start, length int, typeVal string, clientId int, search string) (
 	return list, cnt
 }
 
-//get client list
+// get client list
 func GetClientList(start, length int, search, sort, order string, clientId int) (list []*file.Client, cnt int) {
 	list, cnt = file.GetDb().GetClientList(start, length, search, sort, order, clientId)
 	dealClientData()
@@ -312,7 +313,7 @@ func dealClientData() {
 	return
 }
 
-//delete all host and tasks by client id
+// delete all host and tasks by client id
 func DelTunnelAndHostByClientId(clientId int, justDelNoStore bool) {
 	var ids []int
 	file.GetDb().JsonDb.Tasks.Range(func(key, value interface{}) bool {
@@ -344,7 +345,7 @@ func DelTunnelAndHostByClientId(clientId int, justDelNoStore bool) {
 	}
 }
 
-//close the client
+// close the client
 func DelClientConnect(clientId int) {
 	Bridge.DelClient(clientId)
 }

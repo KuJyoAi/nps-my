@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
@@ -44,8 +43,12 @@ func main() {
 	/*
 		这里进行配置文件重载
 	*/
-	if err := beego.LoadAppConfig("ini", filepath.Join(common.GetRunPath(), "conf", "good.conf")); err != nil {
+	// TODO: DEBUG
+	//configPath := filepath.Join(common.GetRunPath(), "conf", "good.conf")
+	configPath := "E:\\Code\\Golang\\nps-my\\cmd\\nps\\conf\\good.conf"
+	if err := beego.LoadAppConfig("ini", configPath); err != nil {
 		log.Fatalln("load config file error", err.Error())
+
 	}
 	common.InitPProfFromFile()
 	if level = beego.AppConfig.String("log_level"); level == "" {
@@ -228,5 +231,7 @@ func run() {
 		logs.Info("tunnel task  start mode:remoteconfig", ConfigHost)
 		go connection.NewConfigServer().ConfigHostHandler(ConfigHost)
 	}
+
+	// 获取所有的配置后, 从这里开始启动
 	go server.StartNewServer(bridgePort, task, beego.AppConfig.String("bridge_type"), timeout)
 }

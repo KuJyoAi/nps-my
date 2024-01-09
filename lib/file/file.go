@@ -24,10 +24,10 @@ func NewJsonDb(runPath string) *JsonDb {
 }
 
 type JsonDb struct {
-	Tasks            sync.Map
-	Hosts            sync.Map
-	HostsTmp         sync.Map
-	Clients          sync.Map
+	Tasks            *sync.Map
+	Hosts            *sync.Map
+	HostsTmp         *sync.Map
+	Clients          *sync.Map
 	RunPath          string
 	ClientIncreaseId int32  //client increased id
 	TaskIncreaseId   int32  //task increased id
@@ -146,7 +146,7 @@ func loadSyncMapFromFile(filePath string, f func(value string)) {
 	}
 }
 
-func storeSyncMapToFile(m sync.Map, filePath string) {
+func storeSyncMapToFile(m *sync.Map, filePath string) {
 	file, err := os.Create(filePath + ".tmp")
 	// first create a temporary file to store
 	if err != nil {

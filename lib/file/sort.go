@@ -27,7 +27,7 @@ func (p PairList) Less(i, j int) bool {
 }
 
 // A function to turn a map into a PairList, then sort and return it.
-func sortClientByKey(m sync.Map, sortKey, order string) (res []int) {
+func sortClientByKey(m *sync.Map, sortKey, order string) (res []int) {
 	p := make(PairList, 0)
 	m.Range(func(key, value interface{}) bool {
 		p = append(p, &Pair{sortKey, value.(*Client).Id, order, value.(*Client).Flow})

@@ -44,19 +44,19 @@ func NewClient(t, f *nps_mux.Mux, s *conn.Conn, vs string) *Client {
 
 type Bridge struct {
 	TunnelPort     int //通信隧道端口
-	Client         sync.Map
-	Register       sync.Map
+	Client         *sync.Map
+	Register       *sync.Map
 	tunnelType     string //bridge type kcp or tcp
 	OpenTask       chan *file.Tunnel
 	CloseTask      chan *file.Tunnel
 	CloseClient    chan int
 	SecretChan     chan *conn.Secret
 	ipVerify       bool
-	runList        sync.Map //map[int]interface{}
+	runList        *sync.Map //map[int]interface{}
 	disconnectTime int
 }
 
-func NewTunnel(tunnelPort int, tunnelType string, ipVerify bool, runList sync.Map, disconnectTime int) *Bridge {
+func NewTunnel(tunnelPort int, tunnelType string, ipVerify bool, runList *sync.Map, disconnectTime int) *Bridge {
 	return &Bridge{
 		TunnelPort:     tunnelPort,
 		tunnelType:     tunnelType,

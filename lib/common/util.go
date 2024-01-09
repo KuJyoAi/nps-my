@@ -402,7 +402,7 @@ func BytesToNum(b []byte) int {
 }
 
 // get the length of the sync map
-func GeSynctMapLen(m sync.Map) int {
+func GeSynctMapLen(m *sync.Map) int {
 	var c int
 	m.Range(func(key, value interface{}) bool {
 		c++
